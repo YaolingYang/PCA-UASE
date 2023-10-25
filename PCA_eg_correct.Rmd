@@ -1,0 +1,87 @@
+
+```{r}
+r1=r2=r3=r4=vector(length=100)
+for(i in 1:100){
+  set.seed(i)
+  n <- 100  
+  d=5
+  
+  B=matrix(c(1,0.5,0.5,2),nrow=2)
+  #C=cbind(c(rep(1,50),rep(0,50)),
+  #        c(rep(0,50),rep(1,50)))
+  #class=apply(C,1,function(x)which(x==1))
+  C=matrix(runif(n*2),ncol=2,nrow=n)
+  C=C/rowSums(C)
+  C=C[order(C[,1]),]
+  P=C %*% B %*% t(C)         
+  
+  A1=matrix(rexp(n*n,1/P),ncol=n,nrow=n)
+  A2=matrix(rexp(n*n,1/P),ncol=n,nrow=n)
+  A3=matrix(rexp(n*n,1/P),ncol=n,nrow=n)
+  
+  Q1 <- A1 + A2 + A3
+  Q2 <- cbind(A1, A2, A3)
+  
+  svd_Q1 <- svd(Q1)
+  svd_Q2 <- svd(Q2)
+  svd_Q3 <- svd(log(Q1))
+  svd_Q4 <- svd(log(Q2))
+  U1 <- svd_Q1$u %*% diag(sqrt(svd_Q1$d))
+  U2 <- svd_Q2$u %*% diag(sqrt(svd_Q2$d))
+  U3 <- svd_Q3$u %*% diag(sqrt(svd_Q3$d))
+  U4 <- svd_Q4$u %*% diag(sqrt(svd_Q4$d))
+  r1[i]=summary(lm(C[,1]~poly(U1[,1:d],1)))$r.squared
+  r2[i]=summary(lm(C[,1]~poly(U2[,1:d],1)))$r.squared
+  r3[i]=summary(lm(C[,1]~poly(U3[,1:d],1)))$r.squared
+  r4[i]=summary(lm(C[,1]~poly(U4[,1:d],1)))$r.squared
+
+}
+print(rbind(c(mean(r1),mean(r2),mean(r3),mean(r4))))
+```
+
+```{r}
+par(mfrow=c(2,2))
+image(Q1,main="Summed")
+image(A1,main="Matrix 1")
+image(A2,main="Matrix 2")
+image(A3,main="Matrix 3")
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(svd_Q1$d,main="Summed")
+plot(svd_Q2$d,main="Unfolded")
+plot(svd_Q3$d,main="Log of Summed")
+plot(svd_Q4$d,main="Log of Unfolded")
+```
+```{r}
+# Load RColorBrewer
+library(RColorBrewer)
+# Classic palette BuPu, with 4 colors
+coul <- brewer.pal(10, "RdBu") 
+# Add more colors to this palette :
+coul <- colorRampPalette(coul)(100)
+numToCol=function(x){
+  coul[round(x*100)]
+}
+```
+
+```{r}
+## NB these are expected to show the same clusters and be "similar" up to ORTHONORMAL ROTATION i.e. flipping is allowed
+par(mfrow=c(2,2))
+plot(C[,1],lm(C[,1]~U1[,1:2]+U1[,1:2]^2)$fitted.values,main="Summed")
+plot(C[,1],lm(C[,1]~U2[,1:2]+U2[,1:2]^2)$fitted.values,main="Unfolded")
+plot(C[,1],lm(C[,1]~U3[,1:2]+U3[,1:2]^2)$fitted.values,main="Log of Summed")
+plot(C[,1],lm(C[,1]~U4[,1:2]+U4[,1:2]^2)$fitted.values,main="Log of Unfolded")
+```
+
+
+```{r}
+## NB these are expected to show the same clusters and be "similar" up to ORTHONORMAL ROTATION i.e. flipping is allowed
+par(mfrow=c(2,2))
+plot(U1[,1:2],col=numToCol(C[,1]),main="Summed")
+plot(U2[,1:2],col=numToCol(C[,1]),main="Unfolded")
+plot(U3[,1:2],col=numToCol(C[,1]),main="Log of Summed")
+plot(U4[,1:2],col=numToCol(C[,1]),main="Log of Unfolded")
+```
+
